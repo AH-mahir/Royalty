@@ -1,0 +1,43 @@
+<!DOCTYPE html><html lang="bn"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Royalty Restaurant Panel</title></head>
+<body style="font-family:sans-serif;padding:20px;max-width:500px;margin:auto;background:#fff8e1">
+  <h2 style="color:#d84315">Royalty Restaurant Panel</h2>
+  <label>জরুরি নোটিশ:</label>
+  <textarea id="notice" rows="3" style="width:100%;padding:10px;margin:5px 0 15px"></textarea>
+  <label>আজকের স্পেশাল:</label>
+  <input id="item" style="width:100%;padding:10px;margin:5px 0 15px">
+  <label>দাম:</label>
+  <input id="price" style="width:100%;padding:10px;margin:5px 0 15px">
+  <label style="font-size:18px"><input type="checkbox" id="open"> দোকান খোলা</label><br><br>
+  <button onclick="save()" style="width:100%;padding:15px;background:#d84315;color:#fff;border:none;border-radius:5px;font-size:18px">Update করুন</button>
+  <p id="msg" style="text-align:center;margin-top:15px;font-weight:bold"></p>
+
+<script>
+const USER = 'AH-mahir';
+const REPO = 'Royalty';
+const FILE = 'notice.json';
+const TOKEN = 'এখানে_তোমার_ghp_টোকেন_বসাও'; // <-- এইটা Change করো
+
+fetch(`https://api.github.com/repos/${USER}/${REPO}/contents/${FILE}`)
+ .then(r=>r.json()).then(d=>{
+   const c = JSON.parse(atob(d.content));
+   notice.value=c.notice; item.value=c.special_item; price.value=c.special_price; open.checked=c.shop_open;
+   window.sha = d.sha;
+ });
+
+function save(){
+  msg.innerText = 'Saving...'; msg.style.color='blue';
+  const newContent = btoa(unescape(encodeURIComponent(JSON.stringify({
+    notice: notice.value, special_item: item.value, special_price: price.value, shop_open: open.checked
+  }, null, 2))));
+  fetch(`https://api.github.com/repos/${USER}/${REPO}/contents/${FILE}`, {
+    method: 'PUT', headers: {'Authorization': `token ${TOKEN}`},
+    body: JSON.stringify({message: 'Update from panel', content: newContent, sha: window.sha})
+  }).then(r=>r.json()).then(d=>{
+    msg.innerText = d.commit ? '✅ Save হয়েছে! 30sec পর সাইটে আসবে।' : '❌ Error: Token চেক করুন'; 
+    msg.style.color=d.commit?'green':'red';
+    if(d.content) window.sha = d.content.sha;
+  });
+}
+</script>
+</body></html>
